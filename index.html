@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>simulasyon</title>
 
-<!-- Yedek font (Milkway'e benzer, yuvarlak ve sirin). Milkway dosyan varsa asagidaki @font-face onu kullanir. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-/* Repoya milkway.ttf (veya .woff2 / .otf) yukle, otomatik kullanilir */
+
 @font-face{
   font-family:'Milkway';
   src:url('milkway.woff2') format('woff2'),url('milkway.ttf') format('truetype'),url('milkway.otf') format('opentype');
@@ -117,9 +116,9 @@ button{font:inherit;color:inherit}
 </section>
 
 <script>
-/* ====== BURADAN DEGISTIR ====== */
+
 const CFG = {
-  img: 'pusheen.png',                          // repoya yukledigin resim adi
+  img: 'pusheen.png',                          // fotoasdasdasd
   introText: 'yasam akcanin mesajina donus yapma simulasyonuna hosgeldin',
   hint: 'Herhangi bir yere dokun poem',
   cmd: 'mesaj geldigi gibi butona bas!',
@@ -127,16 +126,15 @@ const CFG = {
   win: 'AFERIN SANA POEM!',
   lose: 'basaramadin poem',
   retryText: 'tekrar denemek icin dokun',
-  retry: true,                                 // false yaparsan tekrar deneme olmaz
-  limit: 1000,                                 // ms, bundan hizli basarsa kazanir
-  minWait: 2000, maxWait: 5000                 // mesaj ne kadar sonra gelsin (ms)
+  retry: true,                                
+  limit: 1000,                                 
+  minWait: 2000, maxWait: 5000                 
 };
 /* ============================== */
 
 const $ = id => document.getElementById(id);
 document.querySelectorAll('[data-t]').forEach(e => e.textContent = CFG[e.dataset.t]);
 
-// pusheen.png yoksa sirin bir yedek kedi gosterir
 const FALLBACK = 'data:image/svg+xml,' + encodeURIComponent(
  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 160'>" +
  "<path d='M28 66L38 8L84 38ZM172 66L162 8L116 38Z' fill='#b4b4c2'/>" +
