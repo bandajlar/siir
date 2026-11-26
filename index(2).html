@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>simulasyon</title>
+
+<!-- Yedek font (Milkway'e benzer, yuvarlak ve sirin). Milkway dosyan varsa asagidaki @font-face onu kullanir. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+/* Repoya milkway.ttf (veya .woff2 / .otf) yukle, otomatik kullanilir */
+@font-face{
+  font-family:'Milkway';
+  src:url('milkway.woff2') format('woff2'),url('milkway.ttf') format('truetype'),url('milkway.otf') format('opentype');
+  font-display:swap;
+}
+:root{--pink:#ff6fb5;--pink-d:#e0408f}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%;background:#000;color:#fff;overflow:hidden;touch-action:manipulation;
+  font-family:'Milkway','Fredoka',system-ui,sans-serif}
+img{-webkit-user-drag:none;pointer-events:none}
+button{font:inherit;color:inherit}
+
+.scene{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;background:#000;
+  opacity:0;pointer-events:none;transition:opacity .8s ease}
+.scene.on{opacity:1;pointer-events:auto}
+
+/* ---------- 1. giris ---------- */
+#intro{justify-content:center;padding:0 24px}
+#intro .pu{width:min(62vw,320px);animation:fade .8s ease both}
+#intro h1{margin-top:26px;font-weight:600;text-align:center;font-size:clamp(20px,5.6vw,34px);
+  line-height:1.25;max-width:92vw;text-wrap:balance;overflow-wrap:anywhere;
+  animation:fade .7s ease .25s both}
+#hint{position:absolute;left:0;right:0;text-align:center;bottom:calc(env(safe-area-inset-bottom) + 8vh);
+  font-size:clamp(16px,4.4vw,22px);opacity:0;animation:pulse 2s ease-in-out infinite}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:0}50%{opacity:1}}
+
+/* ---------- 2. oyun ---------- */
+#game{padding:0 20px}
+.msgwrap{flex:1;width:100%;max-width:460px;display:flex;align-items:center}
+.msg{display:flex;align-items:flex-end;gap:8px;opacity:0;transform:translateY(16px) scale(.92);transform-origin:left bottom;
+  transition:opacity .15s ease,transform .25s cubic-bezier(.2,1.4,.4,1)}
+.msg.show{opacity:1;transform:none}
+.ava{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#3a3a3a;flex:none}
+.bubble{background:#262626;color:#fff;padding:11px 16px;border-radius:22px;border-bottom-left-radius:6px;
+  font-size:clamp(17px,4.6vw,20px);line-height:1.3;max-width:78vw}
+.bottom{display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 7vh)}
+.cmd{font-size:clamp(18px,5vw,24px)}
+.btn{width:min(46vw,180px);aspect-ratio:1;border:0;border-radius:50%;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,#ffc2e2,var(--pink) 58%,var(--pink-d));
+  box-shadow:0 0 0 9px rgba(255,111,181,.16),0 0 46px rgba(255,111,181,.45);
+  font-size:clamp(28px,8.5vw,40px);font-weight:600;font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 0 rgba(0,0,0,.18);transition:transform .07s}
+.btn:active{transform:scale(.93)}
+.btn.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ---------- 3. kazandi ---------- */
+#win{justify-content:center;background:linear-gradient(160deg,#ffc9e4,#ff8fc2);transition-duration:.6s}
+#win canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#rollers{position:absolute;inset:0;overflow:hidden;z-index:1}
+.roll{position:absolute;left:0;object-fit:contain}
+@keyframes roll{from{transform:translateX(-30vw) rotate(0)}to{transform:translateX(130vw) rotate(1080deg)}}
+@keyframes rollL{from{transform:translateX(130vw) rotate(0)}to{transform:translateX(-30vw) rotate(-1080deg)}}
+#win h2{position:relative;z-index:3;padding:0 20px;text-align:center;font-size:clamp(38px,12vw,86px);line-height:1.05;
+  text-shadow:0 5px 0 var(--pink-d),0 10px 24px rgba(0,0,0,.18);animation:bounce 1s ease-in-out infinite}
+#win p{position:relative;z-index:3;margin-top:14px;font-size:clamp(18px,5vw,26px);text-shadow:0 2px 0 var(--pink-d)}
+@keyframes bounce{50%{transform:translateY(-12px) scale(1.04)}}
+
+/* ---------- 4. kaybetti ---------- */
+#lose{justify-content:center;padding:0 24px;text-align:center}
+#lose h2{font-size:clamp(34px,10vw,72px);font-weight:600}
+#retry{margin-top:22px;font-size:clamp(14px,3.8vw,18px);opacity:0;transition:opacity 1s;color:#aaa}
+#retry.on{opacity:1}
+
+@media (prefers-reduced-motion:reduce){.roll{animation-duration:20s!important}}
+</style>
+</head>
+<body>
+
+<section id="intro" class="scene on">
+  <div style="flex:1"></div>
+  <img class="pu" data-pu alt="">
+  <h1 data-t="introText"></h1>
+  <div style="flex:1"></div>
+  <div id="hint" data-t="hint"></div>
+</section>
+
+<section id="game" class="scene">
+  <div class="msgwrap">
+    <div class="msg" id="msg">
+      <img class="ava" data-pu alt="">
+      <div class="bubble" data-t="message"></div>
+    </div>
+  </div>
+  <div class="bottom">
+    <p class="cmd" data-t="cmd"></p>
+    <button class="btn" id="btn" aria-label="bas"><span id="time">0.000</span></button>
+  </div>
+</section>
+
+<section id="win" class="scene">
+  <div id="rollers"></div>
+  <canvas id="cf"></canvas>
+  <h2 data-t="win"></h2>
+  <p id="rt"></p>
+</section>
+
+<section id="lose" class="scene">
+  <h2 data-t="lose"></h2>
+  <div id="retry" data-t="retryText"></div>
+</section>
+
+<script>
+/* ====== BURADAN DEGISTIR ====== */
+const CFG = {
+  img: 'pusheen.png',                          // repoya yukledigin resim adi
+  introText: 'yasam akcanin mesajina donus yapma simulasyonuna hosgeldin',
+  hint: 'Herhangi bir yere dokun poem',
+  cmd: 'mesaj geldigi gibi butona bas!',
+  message: 'merhaba siir ben yasam!',
+  win: 'AFERIN SANA POEM!',
+  lose: 'basaramadin poem',
+  retryText: 'tekrar denemek icin dokun',
+  retry: true,                                 // false yaparsan tekrar deneme olmaz
+  limit: 1000,                                 // ms, bundan hizli basarsa kazanir
+  minWait: 2000, maxWait: 5000                 // mesaj ne kadar sonra gelsin (ms)
+};
+/* ============================== */
+
+const $ = id => document.getElementById(id);
+document.querySelectorAll('[data-t]').forEach(e => e.textContent = CFG[e.dataset.t]);
+
+// pusheen.png yoksa sirin bir yedek kedi gosterir
+const FALLBACK = 'data:image/svg+xml,' + encodeURIComponent(
+ "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 160'>" +
+ "<path d='M28 66L38 8L84 38ZM172 66L162 8L116 38Z' fill='#b4b4c2'/>" +
+ "<ellipse cx='100' cy='96' rx='88' ry='60' fill='#cbcbd8'/>" +
+ "<path d='M90 40v14M100 38v16M110 40v14' stroke='#8d8d9d' stroke-width='5' stroke-linecap='round'/>" +
+ "<circle cx='66' cy='92' r='6' fill='#222'/><circle cx='134' cy='92' r='6' fill='#222'/>" +
+ "<circle cx='50' cy='108' r='10' fill='#ffb3c7'/><circle cx='150' cy='108' r='10' fill='#ffb3c7'/>" +
+ "<path d='M91 106q9 9 18 0' stroke='#222' stroke-width='3' fill='none' stroke-linecap='round'/></svg>");
+function setPu(img){ img.onerror = () => { img.onerror = null; img.src = FALLBACK; }; img.src = CFG.img; }
+document.querySelectorAll('img[data-pu]').forEach(setPu);
+
+const intro = $('intro'), game = $('game'), win = $('win'), lose = $('lose');
+const msg = $('msg'), btn = $('btn'), timeEl = $('time');
+let state = 'intro', t0 = 0, raf = 0, waitT = 0, canRetry = false;
+const rand = (a, b) => a + Math.random() * (b - a);
+
+// 1) herhangi bir yere dokun
+document.addEventListener('pointerdown', () => {
+  if (state === 'intro') {
+    state = 'busy';
+    intro.classList.remove('on');
+    setTimeout(startGame, 900);
+  } else if (state === 'lose' && CFG.retry && canRetry) {
+    state = 'busy';
+    lose.classList.remove('on');
+    setTimeout(startGame, 900);
+  }
+});
+
+// 2) oyun
+function startGame() {
+  msg.classList.remove('show');
+  timeEl.textContent = '0.000';
+  $('retry').classList.remove('on');
+  game.classList.add('on');
+  state = 'wait';
+  waitT = setTimeout(showMsg, rand(CFG.minWait, CFG.maxWait));
+}
+function showMsg() {
+  state = 'live';
+  msg.classList.add('show');
+  if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) {}
+  t0 = performance.now();
+  raf = requestAnimationFrame(tick);
+}
+function tick() {
+  const t = performance.now() - t0;
+  if (t >= CFG.limit) { timeEl.textContent = (CFG.limit / 1000).toFixed(3); return fail(); }
+  timeEl.textContent = (t / 1000).toFixed(3);
+  raf = requestAnimationFrame(tick);
+}
+btn.addEventListener('pointerdown', e => {
+  e.stopPropagation();
+  if (state === 'wait') {              // mesaj gelmeden basarsa sallanir
+    btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake');
+  } else if (state === 'live') {
+    const t = performance.now() - t0;
+    cancelAnimationFrame(raf);
+    timeEl.textContent = (Math.min(t, CFG.limit) / 1000).toFixed(3);
+    t < CFG.limit ? success(t) : fail();
+  }
+});
+
+// 3) kazandi
+function success(t) {
+  state = 'done';
+  $('rt').textContent = (t / 1000).toFixed(3) + ' sn';
+  buildRollers();
+  win.classList.add('on');
+  setTimeout(() => game.classList.remove('on'), 700);
+  confetti();
+}
+function buildRollers() {
+  const box = $('rollers'); box.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const im = new Image(); im.className = 'roll'; setPu(im);
+    im.style.width = (70 + Math.random() * 80) + 'px';
+    im.style.top = (6 + Math.random() * 78) + '%';
+    im.style.animation = `${i % 2 ? 'rollL' : 'roll'} ${rand(6, 12)}s linear ${-rand(0, 10)}s infinite`;
+    box.appendChild(im);
+  }
+}
+function confetti() {
+  const c = $('cf'), x = c.getContext('2d');
+  let W = c.width = innerWidth, H = c.height = innerHeight;
+  const cols = ['#ffffff', '#ffd54f', '#7c4dff', '#40c4ff', '#ff5252', '#69f0ae', '#ff4081'];
+  const P = Array.from({ length: 150 }, () => ({
+    x: Math.random() * W, y: -Math.random() * H, w: 6 + Math.random() * 8, h: 10 + Math.random() * 10,
+    vy: 2 + Math.random() * 3.5, vx: rand(-1, 1), r: Math.random() * 6.28, vr: rand(-.15, .15),
+    c: cols[(Math.random() * cols.length) | 0]
+  }));
+  (function loop() {
+    if (!win.classList.contains('on')) return;
+    x.clearRect(0, 0, W, H);
+    for (const p of P) {
+      p.y += p.vy; p.x += p.vx + Math.sin(p.y / 30); p.r += p.vr;
+      if (p.y > H + 20) { p.y = -20; p.x = Math.random() * W; }
+      x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c;
+      x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); x.restore();
+    }
+    requestAnimationFrame(loop);
+  })();
+}
+
+// 4) kaybetti
+function fail() {
+  state = 'done';
+  cancelAnimationFrame(raf);
+  game.classList.remove('on');
+  setTimeout(() => {
+    lose.classList.add('on');
+    state = 'lose'; canRetry = false;
+    if (CFG.retry) setTimeout(() => { canRetry = true; $('retry').classList.add('on'); }, 2200);
+  }, 350);
+}
+</script>
+</body>
+</html>
